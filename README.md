@@ -19,10 +19,9 @@ uv sync
 
 將點名紀錄表單放到 data 目錄底下
 ```
-.
-├── data/
-│   ├── A.xlsx
-│   └── B.xlsx
+./data/
+├── A.xlsx
+└── B.xlsx
 ```
 
 在本機上打開 Edge 或 Chrome 瀏覽器的遠端程式
