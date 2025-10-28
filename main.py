@@ -2,7 +2,17 @@ from datetime import datetime
 
 import pandas as pd
 import requests
+from application.use_case.count_class_students import CountClassStudents
+from application.use_case.show_completions import ShowCompletions
+from application.use_case.show_title import ShowTitle
+from double_check import DoubleCheck
+from errors.student_id_mismatch import StudentIDMismatchError
 from playwright.sync_api import sync_playwright
+
+double_check_use_case = DoubleCheck()
+show_completions_use_case = ShowCompletions()
+count_class_students_use_case = CountClassStudents()
+show_title_use_case = ShowTitle()
 
 url = "http://host.docker.internal:9222/json/version"
 headers = {"Host": "localhost"}  # 使用 localhost 的標頭
@@ -26,45 +36,51 @@ try:
         browser = p.chromium.connect_over_cdp(ws_url)
         context = browser.contexts[0]  # 取得現有 context
         page = context.pages[0]  # 取得現有分頁
-        print(page.title())
+        show_title_use_case.execute(page.title())
         main_frame = page.frame(name="main")
-        # radios = main_frame.locator("input[type='radio'][name*='dgmuster:_ctl2:rbl']")
-        # print(radios)
-        # radios.nth(0).check()
-        # radios.nth(5).check()
-        # main_frame.check("#dgmuster_rbl3_0_1_0")
 
         skip_class = 0  # 曠課人數
 
         for index, row in filtered_df.iterrows():
-            index += 2
             name = row["姓名"]
+            student_id = int(row["學號"])
             status = row[target_date]
-            print(f"{name}: {status}")
-            radios = main_frame.locator(
-                f"input[type='radio'][name*='dgmuster:_ctl{index}:rbl']"
+
+            if type(status) is str:
+                print(f"{name}: {status}")
+
+            system_student_id = int(
+                main_frame.locator(f"#dgmuster_lblstdNO_{index}").inner_text()
             )
 
+            if student_id != system_student_id:
+                raise StudentIDMismatchError(
+                    f"學號不相符：Excel={student_id} 網頁={system_student_id}，請確認點名表人數或順序是否正確！"
+                )
+
+            radios = main_frame.locator(
+                f"input[type='radio'][name*='dgmuster:_ctl{index + 2}:rbl']"
+            )
+
+            if radios.nth(0).is_disabled():
+                print(f"{name}: 公假(跳過點名)")
+                skip_class += 1
+                continue
+
             if "曠課" in str(status):
-                print("22")
                 radios.nth(2).check()  # 第1節
                 radios.nth(5).check()  # 第2節
                 skip_class += 1
             if "遲到" in str(status):
-                print("10")
                 radios.nth(1).check()  # 第1節
             if "缺節" in str(status):
-                print("20")
                 radios.nth(2).check()  # 第1節
             if "缺遲" in str(status):
-                print("21")
                 radios.nth(2).check()  # 第1節
                 radios.nth(4).check()  # 第2節
 
-        print("✅ 自動點名完成！")
-    # print(page.content())
-    print("應到人數:", all_students)
-    print("實到人數:", all_students - skip_class)
+        show_completions_use_case.execute()
+    count_class_students_use_case.execute(all_students, skip_class)
 
 except requests.exceptions.ConnectionError:
     print("❌ 無法連接到瀏覽器，請確認瀏覽器已啟動並開啟遠端模式。")
