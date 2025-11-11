@@ -11,6 +11,8 @@ wheels/
 
 # Test files
 sandbox.py
+test_fix.py
+test_progress.py
 
 # Excel files
 data/*.xlsx
