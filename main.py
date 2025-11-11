@@ -2,19 +2,23 @@ from datetime import datetime
 
 import pandas as pd
 import requests
+import dotenv
 from application.use_case.count_class_students import CountClassStudents
 from application.use_case.show_completions import ShowCompletions
 from application.use_case.show_title import ShowTitle
-from double_check import DoubleCheck
 from errors.student_id_mismatch import StudentIDMismatchError
 from playwright.sync_api import sync_playwright
 
-double_check_use_case = DoubleCheck()
+# env loader
+dotenv.load_dotenv()
+base_url = dotenv.get_key(dotenv_path=".env", key_to_get="URL")
+
+# initialize use cases
 show_completions_use_case = ShowCompletions()
 count_class_students_use_case = CountClassStudents()
 show_title_use_case = ShowTitle()
 
-url = "http://host.docker.internal:9222/json/version"
+url = f"http://{base_url}/json/version"
 headers = {"Host": "localhost"}  # 使用 localhost 的標頭
 
 try:
@@ -22,7 +26,7 @@ try:
     token = resp.json()["webSocketDebuggerUrl"].split("/")[-1]
     print("✅ 連線成功！")
 
-    ws_url = f"ws://host.docker.internal:9222/devtools/browser/{token}"
+    ws_url = f"ws://{base_url}/devtools/browser/{token}"
 
     class_name = input("請輸入班級(A/B):")
     y, m, d = map(int, input("輸入日期 (格式: YYYY-MM-DD): ").split("-"))
