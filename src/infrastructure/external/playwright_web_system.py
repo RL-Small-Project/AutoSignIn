@@ -95,26 +95,76 @@ class PlaywrightWebAttendanceSystem(WebAttendanceSystem):
             raise AttendanceProcessingError(f"連接瀏覽器時發生錯誤: {str(e)}")
     
     def verify_student_id(self, excel_student_id: int, index: int) -> bool:
-        """驗證學生ID是否與系統一致"""
+        """驗證學生ID是否與系統一致，並返回實際的索引位置"""
         if not self._is_connected or not self._main_frame:
             raise AttendanceProcessingError("尚未連接到瀏覽器")
         
         try:
             # 在線程池中執行操作
-            future = self._executor.submit(self._verify_student_id_in_thread, excel_student_id, index)
-            return future.result(timeout=5)
+            future = self._executor.submit(self._find_student_index_by_id, excel_student_id)
+            result = future.result(timeout=10)
+            return result is not None
         except Exception as e:
             raise AttendanceProcessingError(f"驗證學生ID時發生錯誤: {str(e)}")
+    
+    def find_student_index(self, excel_student_id: int) -> int:
+        """根據學號查找學生在網頁中的實際索引位置"""
+        if not self._is_connected or not self._main_frame:
+            raise AttendanceProcessingError("尚未連接到瀏覽器")
+        
+        try:
+            future = self._executor.submit(self._find_student_index_by_id, excel_student_id)
+            result = future.result(timeout=10)
+            if result is None:
+                raise AttendanceProcessingError(f"找不到學號 {excel_student_id} 對應的學生")
+            return result
+        except Exception as e:
+            raise AttendanceProcessingError(f"查找學生索引時發生錯誤: {str(e)}")
+    
+    def _find_student_index_by_id(self, excel_student_id: int) -> int:
+        """在專用線程中根據學號查找學生索引"""
+        try:
+            # 查找所有學號元素
+            student_id_elements = self._main_frame.locator("span[id*='lblstdNO']")
+            student_count = student_id_elements.count()
+            
+            for i in range(student_count):
+                element = student_id_elements.nth(i)
+                text_content = element.inner_text().strip()
+                
+                if text_content and text_content.isdigit():
+                    system_student_id = int(text_content)
+                    if system_student_id == excel_student_id:
+                        return i
+            
+            return None
+            
+        except Exception as e:
+            raise AttendanceProcessingError(f"查找學生索引時發生錯誤: {str(e)}")
     
     def _verify_student_id_in_thread(self, excel_student_id: int, index: int) -> bool:
         """在專用線程中驗證學生ID"""
         try:
             element = self._main_frame.locator(f"#dgmuster_lblstdNO_{index}")
+            
+            # 等待元素出現
+            element.wait_for(timeout=3000)
+            
             text_content = element.inner_text()
+            
+            # 清理文字內容，移除空白字符
+            text_content = text_content.strip()
+            
+            if not text_content:
+                raise AttendanceProcessingError(f"無法讀取學號元素內容 (index={index})")
+            
             system_student_id = int(text_content)
             return excel_student_id == system_student_id
+            
+        except ValueError as e:
+            raise AttendanceProcessingError(f"學號格式錯誤 (index={index}, text='{text_content}'): {str(e)}")
         except Exception as e:
-            raise AttendanceProcessingError(f"驗證學生ID時發生錯誤: {str(e)}")
+            raise AttendanceProcessingError(f"驗證學生ID時發生錯誤 (index={index}): {str(e)}")
     
     def mark_attendance(self, index: int, record: AttendanceRecord) -> None:
         """在網頁上標記出勤狀態"""
@@ -185,6 +235,39 @@ class PlaywrightWebAttendanceSystem(WebAttendanceSystem):
             return future.result(timeout=5)
         except Exception as e:
             raise AttendanceProcessingError(f"取得頁面標題時發生錯誤: {str(e)}")
+    
+    def ensure_on_attendance_page(self) -> bool:
+        """確保在正確的點名頁面上"""
+        if not self._is_connected or not self._page:
+            raise AttendanceProcessingError("尚未連接到瀏覽器")
+        
+        try:
+            future = self._executor.submit(self._ensure_on_attendance_page_in_thread)
+            return future.result(timeout=30)
+        except Exception as e:
+            raise AttendanceProcessingError(f"導航至點名頁面時發生錯誤: {str(e)}")
+    
+    def _ensure_on_attendance_page_in_thread(self) -> bool:
+        """在專用線程中確保在點名頁面上"""
+        try:
+            current_title = self._page.title()
+            
+            # 檢查是否已經在點名頁面
+            if "教師系統" in current_title:
+                # 檢查 main frame 中是否有點名表格
+                if self._main_frame:
+                    attendance_table = self._main_frame.locator("#dgmuster")
+                    if attendance_table.count() > 0:
+                        return True
+                
+            # 檢查主頁面是否有點名表格存在
+            attendance_table = self._page.locator("#dgmuster")
+            if attendance_table.count() > 0:
+                return True
+            
+            return False
+        except Exception as e:
+            raise AttendanceProcessingError(f"檢查頁面狀態時發生錯誤: {str(e)}")
     
     def _get_page_title_in_thread(self) -> str:
         """在專用線程中取得頁面標題"""

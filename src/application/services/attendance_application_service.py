@@ -49,6 +49,22 @@ class AutoAttendanceApplicationService:
                     message=f"找不到 {request.class_name} 班 {request.date} 的出勤記錄"
                 )
             
+            # 檢查是否在正確的頁面上
+            try:
+                if hasattr(self._processing_service._web_system, 'ensure_on_attendance_page'):
+                    is_on_correct_page = self._processing_service._web_system.ensure_on_attendance_page()
+                    if not is_on_correct_page:
+                        return AttendanceResultDTO(
+                            success=False,
+                            total_students=len(records),
+                            actual_attendance=0,
+                            skipped_count=0,
+                            errors=["瀏覽器未在正確的點名頁面上，請手動導航到點名頁面"],
+                            message="頁面檢查失敗"
+                        )
+            except Exception:
+                pass  # 忽略頁面檢查錯誤，繼續執行
+            
             # 處理出勤記錄，傳遞進度回調
             result = self._processing_service.process_attendance_records(records, progress_callback)
             

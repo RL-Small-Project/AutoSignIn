@@ -61,23 +61,25 @@ class AttendanceProcessingService:
                 if progress_callback:
                     progress_callback("processing", record, current_index, total_records)
                 
-                # 驗證學生ID
-                if not self._web_system.verify_student_id(student_id, i):
-                    error_msg = f"學號不相符：Excel={student_id} 網頁=系統值，學生：{student_name}"
+                # 根據學號查找在網頁中的實際索引位置
+                try:
+                    actual_index = self._web_system.find_student_index(student_id)
+                except Exception as e:
+                    error_msg = f"找不到學生：{student_name} (學號: {student_id}) - {str(e)}"
                     errors.append(error_msg)
                     if progress_callback:
                         progress_callback("error", record, current_index, total_records)
                     continue
                 
                 # 檢查是否為公假
-                if self._web_system.is_student_on_official_leave(i):
+                if self._web_system.is_student_on_official_leave(actual_index):
                     skipped_count += 1
                     if progress_callback:
                         progress_callback("official_leave", record, current_index, total_records)
                     continue
                 
                 # 標記出勤狀態
-                self._web_system.mark_attendance(i, record)
+                self._web_system.mark_attendance(actual_index, record)
                 
                 if record.status.affects_attendance_count():
                     skipped_count += 1

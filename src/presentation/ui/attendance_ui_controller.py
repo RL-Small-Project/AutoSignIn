@@ -31,7 +31,7 @@ class AttendanceUIController:
 
     def create_ui(self, page: ft.Page):
         """創建使用者界面"""
-        page.title = "自動點名系統 (DDD架構)"
+        page.title = "中國科技大學-自動化點名系統"
         page.theme_mode = ft.ThemeMode.LIGHT
         page.window.width = 650
         page.window.height = 750
@@ -42,14 +42,14 @@ class AttendanceUIController:
         title_container = ft.Container(
             content=ft.Column([
                 ft.Text(
-                    "📢 自動點名系統",
+                    "📢 中國科技大學-自動化點名系統",
                     size=32,
                     weight=ft.FontWeight.BOLD,
                     color=ft.Colors.BLUE_800,
                     text_align=ft.TextAlign.CENTER
                 ),
                 ft.Text(
-                    "基於 Domain-Driven Design 架構",
+                    "Design by Raylon",
                     size=16,
                     color=ft.Colors.GREY_600,
                     text_align=ft.TextAlign.CENTER
@@ -69,7 +69,7 @@ class AttendanceUIController:
                 ft.dropdown.Option("A", "A班"),
                 ft.dropdown.Option("B", "B班"),
             ],
-            width=200,
+            expand=True,
             border_color=ft.Colors.BLUE_400,
         )
         
@@ -77,7 +77,7 @@ class AttendanceUIController:
             label="日期 (YYYY-MM-DD)",
             hint_text="例: 2025-11-11",
             value=datetime.now().strftime("%Y-%m-%d"),
-            width=200,
+            expand=True,
             border_color=ft.Colors.BLUE_400,
         )
         
@@ -149,10 +149,11 @@ class AttendanceUIController:
         
         # 日誌容器
         self.log_container = ft.ListView(
-            height=250,
-            width=580,
+            height=300,
             spacing=3,
             padding=ft.Padding(10, 10, 10, 10),
+            expand=True,
+            auto_scroll=False,
         )
         
         log_title_container = ft.Container(
@@ -160,6 +161,27 @@ class AttendanceUIController:
                 ft.Row([
                     ft.Icon(ft.Icons.LIST_ALT, color=ft.Colors.BLUE),
                     ft.Text("執行日誌", size=18, weight=ft.FontWeight.BOLD),
+                    ft.Container(expand=True),  # 寬度 auto
+                    ft.Row([
+                        ft.IconButton(
+                            icon=ft.Icons.KEYBOARD_ARROW_UP,
+                            tooltip="滾動到頂部",
+                            on_click=self._scroll_to_top,
+                            icon_size=20
+                        ),
+                        ft.IconButton(
+                            icon=ft.Icons.KEYBOARD_ARROW_DOWN,
+                            tooltip="滾動到底部",
+                            on_click=self._scroll_to_bottom,
+                            icon_size=20
+                        ),
+                        ft.IconButton(
+                            icon=ft.Icons.CLEAR,
+                            tooltip="清空日誌",
+                            on_click=self._clear_log_click,
+                            icon_size=20
+                        ),
+                    ])
                 ]),
                 ft.Container(
                     content=self.log_container,
@@ -231,16 +253,41 @@ class AttendanceUIController:
         )
         self.log_container.controls.append(log_item)
         
-        # 自動滾動到最底部
-        if len(self.log_container.controls) > 20:
-            self.log_container.controls.pop(0)
-        
+        # 手動滾動到最底部以顯示最新訊息
         self.log_container.update()
+        
+        # 使用異步方式滾動到底部
+        try:
+            if len(self.log_container.controls) > 0:
+                self.log_container.scroll_to(
+                    offset=-1,  # 滾動到最底部
+                    duration=100
+                )
+        except:
+            pass  # 忽略滾動錯誤
     
     def _clear_log(self):
         """清空日誌"""
         self.log_container.controls.clear()
         self.log_container.update()
+    
+    def _clear_log_click(self, e):
+        """按鈕觸發的清空日誌"""
+        self._clear_log()
+    
+    def _scroll_to_top(self, e):
+        """滾動到頂部"""
+        try:
+            self.log_container.scroll_to(offset=0, duration=300)
+        except:
+            pass
+    
+    def _scroll_to_bottom(self, e):
+        """滾動到底部"""
+        try:
+            self.log_container.scroll_to(offset=-1, duration=300)
+        except:
+            pass
     
     def _start_attendance(self, e):
         """開始自動點名流程"""
