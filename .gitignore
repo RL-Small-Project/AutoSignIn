@@ -6,8 +6,9 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
+# environments
 .venv
+.env
 
 # Test files
 sandbox.py
