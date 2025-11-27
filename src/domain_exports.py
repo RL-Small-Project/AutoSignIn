@@ -19,7 +19,6 @@ from .infrastructure.external.playwright_web_system import (
 )
 
 # Presentation exports
-from .presentation.cli.attendance_cli_controller import AttendanceCliController
 from .presentation.ui.attendance_ui_controller import AttendanceUIController, create_ui_app
 
 __all__ = [

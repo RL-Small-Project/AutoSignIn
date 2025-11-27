@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from typing import Optional, Callable
 
@@ -10,6 +9,12 @@ from ...domain.value_objects.attendance_record import AttendanceRecord
 from ...infrastructure.repositories.excel_attendance_repository import ExcelAttendanceRepository
 from ...infrastructure.external.playwright_web_system import WebAttendanceSystemFactory
 
+from .components.title_component import TitleComponent, UIConstants
+from .components.input_component import InputComponent
+from .components.status_component import StatusComponent
+from .components.log_component import LogComponent
+from .components.result_component import ResultComponent
+
 
 class AttendanceUIController:
     """UI控制器"""
@@ -19,215 +24,32 @@ class AttendanceUIController:
         self._attendance_repository = ExcelAttendanceRepository()
         self._attendance_service: Optional[AutoAttendanceApplicationService] = None
         
-        # UI 元件
-        self.class_dropdown = None
-        self.date_picker = None
-        self.status_text = None
-        self.progress_bar = None
-        self.log_container = None
-        self.result_text = None
-        self.start_button = None
-        self.result_container = None
+        # UI 組件
+        self.title_component = TitleComponent()
+        self.input_component = InputComponent()
+        self.status_component = StatusComponent(on_start_click=self._start_attendance)
+        self.log_component = LogComponent()
+        self.result_component = ResultComponent()
 
     def create_ui(self, page: ft.Page):
         """創建使用者界面"""
-        page.title = "中國科技大學-自動化點名系統"
-        page.theme_mode = ft.ThemeMode.LIGHT
-        page.window.width = 650
-        page.window.height = 750
-        page.window.resizable = False
-        page.scroll = ft.ScrollMode.AUTO
+        self._setup_page_config(page)
         
-        # 標題區塊
-        title_container = ft.Container(
-            content=ft.Column([
-                ft.Text(
-                    "📢 中國科技大學-自動化點名系統",
-                    size=32,
-                    weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.BLUE_800,
-                    text_align=ft.TextAlign.CENTER
-                ),
-                ft.Text(
-                    "Design by Raylon",
-                    size=16,
-                    color=ft.Colors.GREY_600,
-                    text_align=ft.TextAlign.CENTER
-                ),
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-            bgcolor=ft.Colors.BLUE_50,
-            padding=ft.Padding(20, 20, 20, 20),
-            border_radius=10,
-            margin=ft.Margin(0, 0, 0, 20)
-        )
-        
-        # 輸入區塊
-        self.class_dropdown = ft.Dropdown(
-            label="選擇班級",
-            hint_text="請選擇班級",
-            options=[
-                ft.dropdown.Option("A", "A班"),
-                ft.dropdown.Option("B", "B班"),
-            ],
-            expand=True,
-            border_color=ft.Colors.BLUE_400,
-        )
-        
-        self.date_picker = ft.TextField(
-            label="日期 (YYYY-MM-DD)",
-            hint_text="例: 2025-11-11",
-            value=datetime.now().strftime("%Y-%m-%d"),
-            expand=True,
-            border_color=ft.Colors.BLUE_400,
-        )
-        
-        input_container = ft.Container(
-            content=ft.Column([
-                ft.Text("📝 基本設定", size=18, weight=ft.FontWeight.BOLD),
-                ft.Row([
-                    ft.Icon(ft.Icons.SCHOOL, color=ft.Colors.BLUE),
-                    ft.Text("班級：", size=16),
-                    self.class_dropdown,
-                ], alignment=ft.MainAxisAlignment.START),
-                ft.Row([
-                    ft.Icon(ft.Icons.DATE_RANGE, color=ft.Colors.BLUE),
-                    ft.Text("日期：", size=16),
-                    self.date_picker,
-                ], alignment=ft.MainAxisAlignment.START),
-            ], spacing=15),
-            bgcolor=ft.Colors.WHITE,
-            padding=ft.Padding(20, 15, 20, 15),
-            border_radius=10,
-            border=ft.border.all(1, ft.Colors.BLUE_200),
-            margin=ft.Margin(0, 0, 0, 20)
-        )
-        
-        # 狀態顯示
-        self.status_text = ft.Text(
-            "請選擇班級和日期後點擊開始",
-            size=14,
-            color=ft.Colors.GREY_600,
-            text_align=ft.TextAlign.CENTER
-        )
-        
-        # 進度條
-        self.progress_bar = ft.ProgressBar(
-            value=0,
-            width=500,
-            visible=False,
-            color=ft.Colors.GREEN,
-            bgcolor=ft.Colors.GREY_300,
-            border_radius=10,
-        )
-        
-        # 開始按鈕
-        self.start_button = ft.ElevatedButton(
-            text="開始自動點名",
-            icon=ft.Icons.PLAY_ARROW,
-            on_click=self._start_attendance,
-            width=200,
-            height=50,
-            style=ft.ButtonStyle(
-                bgcolor=ft.Colors.GREEN_400,
-                color=ft.Colors.WHITE,
-                text_style=ft.TextStyle(size=16, weight=ft.FontWeight.BOLD)
-            )
-        )
-        
-        # 狀態容器
-        status_container = ft.Container(
-            content=ft.Column([
-                self.status_text,
-                self.progress_bar,
-                self.start_button,
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
-            bgcolor=ft.Colors.GREY_50,
-            padding=ft.Padding(20, 15, 20, 15),
-            border_radius=10,
-            margin=ft.Margin(0, 0, 0, 20)
-        )
-        
-        # 日誌容器
-        self.log_container = ft.ListView(
-            height=300,
-            spacing=3,
-            padding=ft.Padding(10, 10, 10, 10),
-            expand=True,
-            auto_scroll=False,
-        )
-        
-        log_title_container = ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    ft.Icon(ft.Icons.LIST_ALT, color=ft.Colors.BLUE),
-                    ft.Text("執行日誌", size=18, weight=ft.FontWeight.BOLD),
-                    ft.Container(expand=True),  # 寬度 auto
-                    ft.Row([
-                        ft.IconButton(
-                            icon=ft.Icons.KEYBOARD_ARROW_UP,
-                            tooltip="滾動到頂部",
-                            on_click=self._scroll_to_top,
-                            icon_size=20
-                        ),
-                        ft.IconButton(
-                            icon=ft.Icons.KEYBOARD_ARROW_DOWN,
-                            tooltip="滾動到底部",
-                            on_click=self._scroll_to_bottom,
-                            icon_size=20
-                        ),
-                        ft.IconButton(
-                            icon=ft.Icons.CLEAR,
-                            tooltip="清空日誌",
-                            on_click=self._clear_log_click,
-                            icon_size=20
-                        ),
-                    ])
-                ]),
-                ft.Container(
-                    content=self.log_container,
-                    border=ft.border.all(1, ft.Colors.GREY_300),
-                    border_radius=10,
-                    bgcolor=ft.Colors.WHITE,
-                ),
-            ], spacing=10),
-            bgcolor=ft.Colors.GREY_50,
-            padding=ft.Padding(20, 15, 20, 15),
-            border_radius=10,
-            margin=ft.Margin(0, 0, 0, 20)
-        )
-        
-        # 結果顯示
-        self.result_text = ft.Text(
-            "",
-            size=16,
-            weight=ft.FontWeight.BOLD,
-            color=ft.Colors.GREEN_800,
-            text_align=ft.TextAlign.CENTER
-        )
-        
-        result_container = ft.Container(
-            content=ft.Column([
-                ft.Icon(ft.Icons.ASSESSMENT, color=ft.Colors.GREEN, size=24),
-                self.result_text,
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
-            bgcolor=ft.Colors.GREEN_50,
-            padding=ft.Padding(20, 15, 20, 15),
-            border_radius=10,
-            visible=False
-        )
-        
-        self.result_container = result_container
+        # 創建UI組件容器
+        title_container = self.title_component.get_container()
+        input_container = self.input_component.get_container()
+        status_container = self.status_component.get_container()
+        log_container = self.log_component.get_container()
+        result_container = self.result_component.get_container()
         
         # 主布局
         main_column = ft.Column([
             title_container,
             input_container,
             status_container,
-            log_title_container,
+            log_container,
             result_container,
-        ], 
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        spacing=0)
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=0)
         
         # 添加到頁面
         page.add(
@@ -238,38 +60,22 @@ class AttendanceUIController:
             )
         )
     
+    def _setup_page_config(self, page: ft.Page):
+        """設定頁面基本配置"""
+        page.title = UIConstants.APP_TITLE
+        page.theme_mode = ft.ThemeMode.LIGHT
+        page.window.width = UIConstants.WINDOW_WIDTH
+        page.window.height = UIConstants.WINDOW_HEIGHT
+        page.window.resizable = False
+        page.scroll = ft.ScrollMode.AUTO
+    
     def _add_log(self, message: str, color: str = None):
         """新增日誌訊息"""
-        if color is None:
-            color = ft.Colors.BLACK
-        
-        log_item = ft.Container(
-            content=ft.Text(
-                message,
-                size=12,
-                color=color
-            ),
-            padding=ft.Padding(5, 2, 5, 2)
-        )
-        self.log_container.controls.append(log_item)
-        
-        # 手動滾動到最底部以顯示最新訊息
-        self.log_container.update()
-        
-        # 使用異步方式滾動到底部
-        try:
-            if len(self.log_container.controls) > 0:
-                self.log_container.scroll_to(
-                    offset=-1,  # 滾動到最底部
-                    duration=100
-                )
-        except:
-            pass  # 忽略滾動錯誤
+        self.log_component.add_log(message, color)
     
     def _clear_log(self):
         """清空日誌"""
-        self.log_container.controls.clear()
-        self.log_container.update()
+        self.log_component.clear_log()
     
     def _clear_log_click(self, e):
         """按鈕觸發的清空日誌"""
@@ -277,68 +83,53 @@ class AttendanceUIController:
     
     def _scroll_to_top(self, e):
         """滾動到頂部"""
-        try:
-            self.log_container.scroll_to(offset=0, duration=300)
-        except:
-            pass
+        self.log_component._scroll_to_top(e)
     
     def _scroll_to_bottom(self, e):
         """滾動到底部"""
-        try:
-            self.log_container.scroll_to(offset=-1, duration=300)
-        except:
-            pass
+        self.log_component._scroll_to_bottom(e)
     
     def _start_attendance(self, e):
         """開始自動點名流程"""
         try:
             # 驗證輸入
-            if not self.class_dropdown.value:
+            if not self.input_component.get_class_value():
                 self._show_error("請選擇班級")
                 return
             
-            if not self.date_picker.value:
+            if not self.input_component.get_date_value():
                 self._show_error("請輸入日期")
                 return
             
             # 驗證日期格式
             try:
-                datetime.strptime(self.date_picker.value, "%Y-%m-%d")
+                datetime.strptime(self.input_component.get_date_value(), "%Y-%m-%d")
             except ValueError:
                 self._show_error("日期格式錯誤，請使用 YYYY-MM-DD 格式")
                 return
             
             # 禁用開始按鈕
-            self.start_button.disabled = True
-            self.start_button.update()
+            self.status_component.set_button_enabled(False)
             
             # 清空之前的日誌和結果
             self._clear_log()
-            self.result_text.value = ""
-            self.result_container.visible = False
-            self.result_container.update()
+            self.result_component.clear_result()
             
             # 更新狀態
-            self.status_text.value = "正在初始化系統..."
-            self.status_text.color = ft.Colors.ORANGE
-            self.progress_bar.visible = True
-            self.progress_bar.value = 0.1
-            self.status_text.update()
-            self.progress_bar.update()
+            self.status_component.set_status("正在初始化系統...", ft.Colors.ORANGE)
+            self.status_component.set_progress(0.1, True)
             
             self._add_log("🔄 開始自動點名流程...")
             
             # 創建請求
             request = AttendanceRequest(
-                class_name=self.class_dropdown.value,
-                date=self.date_picker.value
+                class_name=self.input_component.get_class_value(),
+                date=self.input_component.get_date_value()
             )
             
             # 初始化服務
-            self.status_text.value = "正在連接瀏覽器..."
-            self.status_text.update()
-            self.progress_bar.value = 0.3
-            self.progress_bar.update()
+            self.status_component.set_status("正在連接瀏覽器...")
+            self.status_component.set_progress(0.3)
             
             web_system = WebAttendanceSystemFactory.create()
             self._attendance_service = AutoAttendanceApplicationService(
@@ -350,10 +141,8 @@ class AttendanceUIController:
             self._add_log(f"📋 頁面標題: {web_system.get_page_title()}")
             
             # 執行自動點名
-            self.status_text.value = "正在執行自動點名..."
-            self.status_text.update()
-            self.progress_bar.value = 0.6
-            self.progress_bar.update()
+            self.status_component.set_status("正在執行自動點名...")
+            self.status_component.set_progress(0.6)
             
             # 執行自動點名，傳遞進度回調
             result = self._attendance_service.execute_auto_attendance(
@@ -362,32 +151,24 @@ class AttendanceUIController:
             )
             
             # 顯示結果
-            self.progress_bar.value = 1.0
-            self.progress_bar.update()
+            self.status_component.set_progress(1.0)
             
             if result.success:
-                self.status_text.value = "點名完成！"
-                self.status_text.color = ft.Colors.GREEN
+                self.status_component.set_status("點名完成！", ft.Colors.GREEN)
                 self._add_log("✅ 自動點名完成！", ft.Colors.GREEN)
-                self.result_text.value = result.get_summary()
-                self.result_container.visible = True
-                self.result_container.update()
+                self.result_component.show_result(result.get_summary())
             else:
-                self.status_text.value = "點名失敗"
-                self.status_text.color = ft.Colors.RED
-                self._add_log(f"❌ 點名失敗: {result.message}", ft.Colors.RED)
+                self.status_component.set_status("點名失敗", ft.Colors.RED)
+                self._add_log(f"❌ 點名失敗！", ft.Colors.RED)
                 
                 for error in result.errors:
                     self._add_log(f"  • {error}", ft.Colors.RED)
-            
-            self.status_text.update()
             
         except Exception as ex:
             self._show_error(f"未預期錯誤: {str(ex)}")
         finally:
             # 重新啟用開始按鈕
-            self.start_button.disabled = False
-            self.start_button.update()
+            self.status_component.set_button_enabled(True)
     
     def _progress_callback(self, action: str, record, current: int, total: int):
         """進度回調函數 - 在 UI 中顯示學生處理狀態"""
@@ -397,8 +178,7 @@ class AttendanceUIController:
         
         # 更新進度條
         progress_value = current / total * 0.4 + 0.6  # 從 0.6 到 1.0
-        self.progress_bar.value = progress_value
-        self.progress_bar.update()
+        self.status_component.set_progress(progress_value)
         
         # 創建進度指示器
         progress_text = f"[{current:2d}/{total:2d}]"
@@ -414,17 +194,13 @@ class AttendanceUIController:
     
     def _show_error(self, message: str):
         """顯示錯誤訊息"""
-        self.status_text.value = message
-        self.status_text.color = ft.Colors.RED
-        self.progress_bar.visible = False
-        self.status_text.update()
-        self.progress_bar.update()
+        self.status_component.set_status(message, ft.Colors.RED)
+        self.status_component.set_progress(0, False)
         
         self._add_log(f"❌ {message}", ft.Colors.RED)
         
         # 重新啟用開始按鈕
-        self.start_button.disabled = False
-        self.start_button.update()
+        self.status_component.set_button_enabled(True)
 
 
 def create_ui_app() -> Callable[[ft.Page], None]:
