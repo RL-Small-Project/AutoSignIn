@@ -63,9 +63,9 @@ wheels = [
 ]
 
 [[package]]
-name = "autoscript"
+name = "autosignin"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "flet", extra = ["all"] },
     { name = "openpyxl" },
