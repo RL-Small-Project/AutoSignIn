@@ -1,22 +1,46 @@
 [project]
 name = "autosignin"
-version = "0.1.0"
-description = "中國科技大學-自動化點名系統"
+version = "1.0.0a"
+description = ""
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
+authors = [
+    { name = "RayLon", email = "owo@raylon.dev" }
+]
 dependencies = [
-    "flet[all]>=0.24.1",
-    "openpyxl>=3.1.5",
-    "pandas>=2.3.3",
-    "playwright>=1.55.0",
-    "python-dotenv>=1.2.1",
-    "requests>=2.32.5",
-    "selenium>=4.37.0",
+  "dotenv>=0.9.9",
+  "flet==0.28.3",
+  "openpyxl>=3.1.5",
+  "pandas>=2.3.3",
+  "playwright>=1.57.0",
+  "requests>=2.32.5",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.flet]
+# org name in reverse domain name notation, e.g. "com.mycompany".
+# Combined with project.name to build bundle ID for iOS and Android apps
+org = "dev.raylon"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src"]
+# project display name that is used as an app title on Android and iOS home screens,
+# shown in window titles and about app dialogs on desktop.
+product = "desktop"
+
+# company name to display in about app dialogs
+company = "RL"
+
+# copyright text to display in about app dialogs
+copyright = "Copyright (C) 2025 by RayLon"
+
+[tool.flet.app]
+path = "."
+
+[tool.uv]
+dev-dependencies = [
+    "flet[all]==0.28.3",
+]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.dev.dependencies]
+flet = {extras = ["all"], version = "0.28.3"}

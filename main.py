@@ -1,24 +1,28 @@
-import sys
+import dotenv
 import flet as ft
 
-from src.presentation.ui.attendance_ui_controller import create_ui_app
+from src.theme.config import get_dark_theme
+from src.ui.views.main_view import MainView
 
 
-def main():
-    print("📢 自動點名系統")
-    print("============================")
-    try:
-        ui_app = create_ui_app()
-        # 桌面應用程式模式
-        ft.app(
-            target=ui_app,
-            view=ft.AppView.FLET_APP_WEB,  # 使用原生應用程式視窗
-            assets_dir="assets",  # 資源目錄
-        )
-    except Exception as e:
-        print(f"❌ 啟動UI失敗: {str(e)}")
-        input("按 Enter 鍵退出...")
+def main(page: ft.Page):
+    # 1. 基礎設定
+    page.title = "自動點名系統-中國科技大學(專用)"
+    page.theme = get_dark_theme()
+    page.theme_mode = ft.ThemeMode.DARK
+    page.window.width = 400
+    page.window.height = 700
+
+    dotenv.load_dotenv()
+
+    # 2. 載入 View
+    # 這裡示範最簡單的直接掛載，若專案較大建議使用 page.on_route_change
+    main_content = MainView(page)
+
+    # 3. 將內容加入頁面
+    page.add(main_content)
+    page.update()
 
 
 if __name__ == "__main__":
-    main()
+    ft.app(target=main)

@@ -1,8 +1,5 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
 	"name": "Ubuntu",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/base:jammy",
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
@@ -11,10 +8,13 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"donjayamanne.python-extension-pack"
+				"donjayamanne.python-extension-pack",
+				"charliermarsh.ruff"
 			]
 		}
 	},
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"runArgs": [
+		"--network=host"
+	],
 	"remoteUser": "root"
 }
