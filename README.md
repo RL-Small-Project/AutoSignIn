@@ -81,4 +81,16 @@
     playwright install
     ```
 
+4. 建置 .env
+    > 打包應用時必須把 `DEV_MODE` 設定為 `0`。
+    
+    ```
+    ## Web browser URL
+    URL = "localhost:9222"
+    ## Data folder name
+    DATA_FOLDER_NAME = "data"
+    ## Develop mode
+    DEV_MODE = 0
+    ```
+
 執行完上述步驟及可進行開發。
