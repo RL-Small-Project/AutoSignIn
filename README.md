@@ -27,12 +27,12 @@
     Windows:
     - Chrome
         ```bash
-        cd 'C:\Program Files\Google\Chrome\Application\'
+        cd C:\Program Files\Google\Chrome\Application\
         .\chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\Users\%USERNAME%\AppData\Local\Google\Chrome\User Data"
         ```
     - Edge
         ```bash
-        cd 'C:\Program Files (x86)\Microsoft\Edge\Application\'
+        cd C:\Program Files (x86)\Microsoft\Edge\Application\
         .\msedge.exe --remote-debugging-port=9222 --user-data-dir="C:\edge_profile"
         ```
 
@@ -73,7 +73,7 @@
     ```
 
     ```bash
-    sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+    sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
     ```
 
 3. 安裝瀏覽器
