@@ -8,6 +8,7 @@ from src.services.attendance import AttendanceService
 from src.services.check_web import CheckWebService
 from src.services.read_excel import ReadExcelService
 from src.ui.components.base_button import BaseButton
+from src.ui.components.log_container import LogContainer
 
 
 def MainView(page: ft.Page):
@@ -40,24 +41,9 @@ def MainView(page: ft.Page):
             content=ft.Text(message, size=14, color=color),
             padding=ft.Padding(5, 2, 5, 2),
         )
-        log_container.controls.append(log_item)
-        log_container.scroll_to(offset=-1, duration=300)
-        log_container.update()
-
-    def ClearLogClick(e):
-        """清空日誌"""
-        log_container.controls.clear()
-        log_container.update()
-
-    def ScrollToTop(e):
-        """滾動到頂部"""
-        log_container.scroll_to(offset=0, duration=300)
-        log_container.update()
-
-    def ScrollToBottom(e):
-        """滾動到底部"""
-        log_container.scroll_to(offset=-1, duration=300)
-        log_container.update()
+        log_listview.controls.append(log_item)
+        log_listview.scroll_to(offset=-1, duration=300)
+        log_listview.update()
 
     def choose_date(e):
         """選擇日期"""
@@ -107,7 +93,7 @@ def MainView(page: ft.Page):
         start_button.update()
 
     # components
-    log_container = ft.ListView(
+    log_listview = ft.ListView(
         height=300,
         spacing=3,
         padding=ft.Padding(10, 10, 10, 10),
@@ -177,42 +163,7 @@ def MainView(page: ft.Page):
                 ]
             ),
             ft.Divider(),
-            ft.Container(
-                content=ft.Column(
-                    controls=[
-                        ft.Row(
-                            [
-                                ft.Icon(ft.Icons.LIST_ALT, color=ft.Colors.ON_SURFACE),
-                                ft.Text("執行日誌", size=18, weight=ft.FontWeight.BOLD),
-                                ft.Container(expand=True),
-                                ft.IconButton(
-                                    icon=ft.Icons.KEYBOARD_ARROW_UP,
-                                    tooltip="滾動到頂部",
-                                    on_click=ScrollToTop,
-                                    icon_size=20,
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.KEYBOARD_ARROW_DOWN,
-                                    tooltip="滾動到底部",
-                                    on_click=ScrollToBottom,
-                                    icon_size=20,
-                                ),
-                                ft.IconButton(
-                                    icon=ft.Icons.CLEAR,
-                                    tooltip="清空日誌",
-                                    on_click=ClearLogClick,
-                                    icon_size=20,
-                                ),
-                            ]
-                        ),
-                        ft.Container(
-                            content=log_container,
-                            bgcolor=ft.Colors.SURFACE,
-                            border_radius=10,
-                        ),
-                    ]
-                )
-            ),
+            LogContainer(log_listview),
         ],
         scroll=ft.ScrollMode.AUTO,
     )
