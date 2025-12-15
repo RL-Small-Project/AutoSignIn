@@ -13,8 +13,7 @@ def main(page: ft.Page):
     # 1. 初始設定
     dotenv.load_dotenv()
     system = platform.system()
-    print("Operating System:", system)
-    if getattr(sys, "frozen", False):
+    if os.getenv("DEV_MODE") == "0":
         if system == "Linux":
             try:
                 os.environ["ROOT_PATH"] = os.path.dirname(os.readlink("/proc/self/exe"))
