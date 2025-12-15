@@ -23,8 +23,8 @@ class AttendanceService:
                 context = browser.contexts[0]  # 取得現有 context
                 page = context.pages[0]  # 取得現有分頁
                 main_frame = page.frame(name="main")
-                all_students = len(df["姓名"].tolist())
-                skip_class = 0  # 曠課人數
+                attended_student = 0
+                not_attended_student = 0  # 曠課人數
                 student_rows = main_frame.locator('tr[nowrap="nowrap"]').all()
                 for std_row in student_rows:
                     std_no_elem = std_row.locator('span[id*="lblstdNO"]').first
@@ -52,21 +52,28 @@ class AttendanceService:
                             self.log(f"{student_id} {name}: 曠課", StatusColors.ABSENT)
                             rbl1_options[2].check()  # 第1節
                             rbl2_options[2].check()  # 第2節
-
-                            skip_class += 1
+                            not_attended_student += 1
                         elif "遲到" in str(status):
                             self.log(f"{student_id} {name}: 遲到", StatusColors.LATE)
                             rbl1_options[1].check()  # 第1節
+                            attended_student += 1
                         elif "缺節" in str(status):
                             self.log(f"{student_id} {name}: 缺節", StatusColors.LATE)
                             rbl1_options[2].check()  # 第1節
+                            attended_student += 1
                         elif "缺遲" in str(status):
                             self.log(f"{student_id} {name}: 缺遲", StatusColors.LATE)
                             rbl1_options[2].check()  # 第1節
                             rbl2_options[1].check()  # 第2節
+                            attended_student += 1
                         else:
+                            attended_student += 1
                             self.log(f"{student_id} {name}: 出席", StatusColors.PRESENT)
             self.log("自動點名完成！", color=ft.Colors.GREEN)
+            self.log(
+                f"總人數：{attended_student + not_attended_student}人，曠課人數：{not_attended_student}人, 到課人數：{attended_student}人",
+                color=ft.Colors.BLUE,
+            )
         except IndexError:
             self.log(
                 f"找不到學號為 {system_student_id} 的學生資料，請確認點名表是否正確！",
