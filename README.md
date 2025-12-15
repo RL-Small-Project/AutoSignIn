@@ -47,11 +47,11 @@
         ```
 
 3. 把點名紀錄檔依照 [內容格式](data/Excel_Template_Guide.md) 並存放在 Data 目錄中。
-```
-./data/
-├── A.xlsx
-└── B.xlsx
-```
+    ```
+    ./data/
+    ├── A.xlsx
+    └── B.xlsx
+    ```
 
 ## 回報問題 & 貢獻
 
