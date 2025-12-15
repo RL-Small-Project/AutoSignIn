@@ -1,3 +1,5 @@
+import os
+
 import dotenv
 import flet as ft
 
@@ -14,6 +16,7 @@ def main(page: ft.Page):
     page.window.height = 700
 
     dotenv.load_dotenv()
+    os.environ["ROOT_PATH"] = os.path.dirname(os.path.abspath(__file__))
 
     # 2. 載入 View
     # 這裡示範最簡單的直接掛載，若專案較大建議使用 page.on_route_change

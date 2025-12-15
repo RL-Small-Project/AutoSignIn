@@ -1,3 +1,4 @@
+import flet as ft
 import pandas as pd
 from playwright.sync_api import sync_playwright
 
@@ -65,10 +66,16 @@ class AttendanceService:
                             rbl2_options[1].check()  # 第2節
                         else:
                             self.log(f"{student_id} {name}: 出席", StatusColors.PRESENT)
-
+            self.log("自動點名完成！", color=ft.Colors.GREEN)
         except IndexError:
-            raise IndexError(
-                f"找不到學號為 {system_student_id} 的學生資料，請確認點名表是否正確！"
+            self.log(
+                f"找不到學號為 {system_student_id} 的學生資料，請確認點名表是否正確！",
+                ft.Colors.RED,
+            )
+        except AttributeError:
+            self.log(
+                "請確認點名表的日期以及遠端瀏覽器是否在中國科技大學-點名頁面！",
+                ft.Colors.RED,
             )
         except Exception as e:
             raise e

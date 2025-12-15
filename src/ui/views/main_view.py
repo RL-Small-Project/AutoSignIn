@@ -47,7 +47,6 @@ def MainView(page: ft.Page):
 
     def choose_date(e):
         """選擇日期"""
-        print("選擇的日期:", e.control.value.strftime("%Y-%m-%d"))
         date_picker.value = e.control.value.strftime("%Y-%m-%d")
         date_picker.update()
 
@@ -69,7 +68,6 @@ def MainView(page: ft.Page):
                 start_button.disabled = True
                 start_button.text = "點名中..."
                 start_button.update()
-                add_log("自動點名完成！", color=ft.Colors.GREEN)
             else:
                 add_log("請選擇年級與班級！", color=ft.Colors.RED)
         except requests.exceptions.ConnectionError:
@@ -84,8 +82,6 @@ def MainView(page: ft.Page):
             )
         except ValueError:
             add_log("請確認日期是否正確！", color=ft.Colors.RED)
-        except IndexError as ie:
-            add_log(f"{ie.args[0]}", color=ft.Colors.RED)
         except Exception as ex:
             add_log(f"發生錯誤：{type(ex)}", color=ft.Colors.RED)
         start_button.disabled = False
@@ -151,17 +147,7 @@ def MainView(page: ft.Page):
                 wrap=True,  # 允許換行
                 spacing=20,
             ),
-            ft.Column(
-                [
-                    date_picker,
-                    BaseButton(
-                        text="測試按鈕",
-                        on_click=lambda e: add_log(
-                            "這是一條測試日誌", color=ft.Colors.GREEN
-                        ),
-                    ),
-                ]
-            ),
+            ft.Column([date_picker]),
             ft.Divider(),
             LogContainer(log_listview),
         ],
