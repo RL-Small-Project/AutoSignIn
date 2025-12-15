@@ -1,4 +1,4 @@
-## 介紹
+## 🧭 簡介
 
 這是一個專為中國科技大學（CUTe）設計的自動化點名工具。透過讀取 Excel 點名表，自動操作瀏覽器完成校務系統的點名作業，大幅節省人工點選的時間。
 
@@ -12,13 +12,13 @@
     * 自動偵測「公假」狀態（若系統已鎖定欄位）。
     * 自動檢查學號是否匹配。
 
-## 技術
+## 🛠️ 技術
 
 *   **語言**: Python 3.10+
 *   **GUI 框架**: [Flet](https://flet.dev/)
 *   **瀏覽器自動化**: [Playwright](https://playwright.dev/)
 
-## 如何使用
+## 📖 如何使用
 1. 從 [Releases](https://github.com/RL-Small-Project/AutoSignIn/releases) 下載最新發佈的執行檔。
 
 2. 使用以下命令打開遠端瀏覽器
@@ -53,13 +53,13 @@
     └── B.xlsx
     ```
 
-## 回報問題 & 貢獻
+## 💡 回報問題 & 貢獻
 
 - 問題回報：您可以到 [Issues](https://github.com/RL-Small-Project/AutoSignIn/issues) 進行回報，並說明問題點與執行時的錯誤代碼。
 
 - 成為貢獻者：請 [Fork](https://github.com/RL-Small-Project/AutoSignIn/fork) 此倉庫，建立新分支進行修改，然後提交 [Pull Request](https://github.com/RL-Small-Project/AutoSignIn/pulls)。
 
-## 開發環境建置
+## 🏗️ 開發環境建置
 注意：請使用 DevContainer 進行開發。
 
 1. 同步 UV 套件
