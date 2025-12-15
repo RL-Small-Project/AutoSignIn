@@ -14,7 +14,7 @@ from src.ui.components.log_container import LogContainer
 def MainView(page: ft.Page):
     # init services
     check_web_service = CheckWebService()
-    read_excel_service = ReadExcelService(os.getenv("DATAPATH"))
+    read_excel_service = ReadExcelService(os.getenv("DATA_FOLDER_NAME"))
 
     grades = ["1", "2", "3", "4"]
     groups = ["A", "B", "C", "D"]
@@ -79,7 +79,7 @@ def MainView(page: ft.Page):
             )
         except FileNotFoundError:
             add_log(
-                f"找不到{grade_dd.value}年{class_dd.value}班的點名紀錄檔，請確認檔案是否存在！",
+                f"在 {read_excel_service.data_path} 中找不到 {grade_dd.value}年{class_dd.value}班 的點名紀錄檔，請確認檔案是否存在！",
                 color=ft.Colors.RED,
             )
         except ValueError:
