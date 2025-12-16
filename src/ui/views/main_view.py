@@ -109,7 +109,7 @@ def MainView(page: ft.Page):
     )
     date_picker = ft.TextField(
         label="點名日期",
-        value=datetime.today().strftime("%Y/%m/%d"),
+        value=datetime.today().strftime("%Y-%m-%d"),
         read_only=True,
         on_click=lambda e: page.open(
             ft.DatePicker(

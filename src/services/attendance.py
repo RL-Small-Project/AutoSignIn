@@ -34,45 +34,50 @@ class AttendanceService:
                             continue
                     if std_no_elem.count() > 0:
                         system_student_id = std_no_elem.inner_text()
+                        print("Processing student ID:", system_student_id)
                         df_result = df[df["學號"] == int(system_student_id)]
                         student_id = int(df_result["學號"].iloc[0])
                         name = df_result["姓名"].iloc[0]
                         status = df_result[date].iloc[0]
-                        rbl1_table = std_row.locator('table[id*="rbl1"]').first
-                        rbl2_table = std_row.locator('table[id*="rbl2"]').first
-                        rbl1_options = rbl1_table.locator('input[type="radio"]').all()
-                        rbl2_options = rbl2_table.locator('input[type="radio"]').all()
+                        all_radios = std_row.locator(
+                            'input[type="radio"][name*=":rbl"]'
+                        )
+                        # print(all_radios.count())
+                        # rbl_table = std_row.locator('table[id*="rbl"]')
+                        # rbl2_table = std_row.locator('table[id*="rbl*"]').first
+                        # rbl_options = rbl_table.locator('input[type="radio"]').all()
+                        # rbl2_options = rbl2_table.locator('input[type="radio"]').all()
                         if (
-                            rbl1_options[0].is_disabled()
-                            or rbl2_options[0].is_disabled()
+                            all_radios.nth(0).is_disabled()
+                            or all_radios.nth(3).is_disabled()
                         ):
                             self.log(f"{student_id} {name}: 公假", StatusColors.LEAVE)
                             continue
                         elif "曠課" in str(status):
                             self.log(f"{student_id} {name}: 曠課", StatusColors.ABSENT)
-                            rbl1_options[2].check()  # 第1節
-                            rbl2_options[2].check()  # 第2節
+                            all_radios.nth(2).check()  # 第1節
+                            all_radios.nth(5).check()  # 第2節
                             not_attended_student += 1
                         elif "遲到" in str(status):
                             self.log(f"{student_id} {name}: 遲到", StatusColors.LATE)
-                            rbl1_options[1].check()  # 第1節
+                            all_radios.nth(1).check()  # 第1節
                             attended_student += 1
                         elif "缺節" in str(status):
                             self.log(f"{student_id} {name}: 缺節", StatusColors.LATE)
-                            rbl1_options[2].check()  # 第1節
+                            all_radios.nth(2).check()  # 第1節
                             attended_student += 1
                         elif "缺遲" in str(status):
                             self.log(f"{student_id} {name}: 缺遲", StatusColors.LATE)
-                            rbl1_options[2].check()  # 第1節
-                            rbl2_options[1].check()  # 第2節
+                            all_radios.nth(2).check()  # 第1節
+                            all_radios.nth(4).check()  # 第2節
                             attended_student += 1
                         else:
                             attended_student += 1
                             self.log(f"{student_id} {name}: 出席", StatusColors.PRESENT)
-            self.log("自動點名完成！", color=ft.Colors.GREEN)
+            self.log("自動點名完成！", ft.Colors.GREEN)
             self.log(
-                f"總人數：{attended_student + not_attended_student}人，曠課人數：{not_attended_student}人, 到課人數：{attended_student}人",
-                color=ft.Colors.BLUE,
+                f"總人數：{attended_student + not_attended_student}人, 到課人數：{attended_student}人, 曠課人數：{not_attended_student}人,",
+                ft.Colors.BLUE,
             )
         except IndexError:
             self.log(
