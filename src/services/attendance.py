@@ -34,7 +34,6 @@ class AttendanceService:
                             continue
                     if std_no_elem.count() > 0:
                         system_student_id = std_no_elem.inner_text()
-                        print("Processing student ID:", system_student_id)
                         df_result = df[df["學號"] == int(system_student_id)]
                         student_id = int(df_result["學號"].iloc[0])
                         name = df_result["姓名"].iloc[0]
@@ -42,11 +41,6 @@ class AttendanceService:
                         all_radios = std_row.locator(
                             'input[type="radio"][name*=":rbl"]'
                         )
-                        # print(all_radios.count())
-                        # rbl_table = std_row.locator('table[id*="rbl"]')
-                        # rbl2_table = std_row.locator('table[id*="rbl*"]').first
-                        # rbl_options = rbl_table.locator('input[type="radio"]').all()
-                        # rbl2_options = rbl2_table.locator('input[type="radio"]').all()
                         if (
                             all_radios.nth(0).is_disabled()
                             or all_radios.nth(3).is_disabled()
